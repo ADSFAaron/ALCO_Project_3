@@ -1,0 +1,2 @@
+C:\Users\user\Documents\ALCO_Project_3-master\Project 3 Test\x64\Debug\Project 3 Test.exe
+C:\Users\user\Documents\ALCO_Project_3-master\Project 3 Test\x64\Debug\Project 3 Test.pdb
