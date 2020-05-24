@@ -15,7 +15,7 @@ Output : entry以及Prediction的state轉換,預測的狀態及實際狀態,每�
 
 在有beq的function中執行Prediction的程式。
 
-Prediction處理state的轉換以及Output。
+Prediction處理state的轉換，判斷預測結果是否跟真實結果相符，以及Output。
 
 在RISC-V的程式跳到END後即結束。
 
