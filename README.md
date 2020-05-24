@@ -91,3 +91,212 @@ using namespace std;
 `include<string>`  用來使用string的 operator[]、find 等功能
 
 `include<vector>`  儲存所有Opreator 和輸入的Instruction的空間
+
+
+## Code Explan
+
+```c++
+while (getline(infile, input))
+	{
+		//label存在，將label名字和行數儲存
+		if (label_detected(input))
+		{
+			tmp.name = input;
+			tmp.pos = row;
+			Label.push_back(tmp);
+		}
+		else
+		{
+			stringstream ss(input);
+
+			//分割instruction name
+			getline(ss, file.name, ' ');
+
+			if (file.name == "li")
+			{
+				getline(ss, file.reg1, ',');
+				getline(ss, file.imm, '\n');
+			}
+			else if (file.name == "addi" || file.name == "beq")
+			{
+				getline(ss, file.reg1, ',');
+				getline(ss, file.reg2, ',');
+				getline(ss, file.imm, '\n');
+			}
+			else
+			{
+				cout << "error infile \n\n";
+				system("pause");
+			}
+			++row;
+
+			//將Instruction儲存到vector中
+			implement.push_back(file);
+		}
+	}
+
+```
+
+讀檔，將檔案的RISC-V CODE傳到C++ CODE，並分別不同的instruction到對應的struct。
+
+```
+while (rowPos > -1)
+	{
+		//判斷是哪個instruction
+		if (implement[rowPos].name == "li")
+		{
+			li(implement[rowPos].reg1, implement[rowPos].imm);
+		}
+		else if (implement[rowPos].name == "addi")
+		{
+			addi(implement[rowPos].reg1, implement[rowPos].reg2, implement[rowPos].imm);
+		}
+		else if (implement[rowPos].name == "beq")
+		{
+			beq(implement[rowPos].reg1, implement[rowPos].reg2, implement[rowPos].imm);
+		}
+
+		++rowPos;
+	}
+```
+
+用rowPos判斷，從第一行開始跑，判斷哪個instruction跑到對應的function
+
+function內即為instruction實際運行的c++ code。
+
+```
+void prediction(int rs1, int rs2, string label)
+{
+	string nowstate;		//判斷目前在哪個state
+	int beqno = 0;				//判斷是再跑which beq
+	int statenum;				//判斷第幾個state
+	string result = "T";	//state實際結果
+	int beqCount = 0;
+
+	//找instruction中所有beq
+	for (int i = 0; i < implement.size(); ++i)
+	{
+		if (implement[i].name == "beq")
+		{
+			pred[beqCount].entry = i % entry;
+			pred[beqCount].label = implement[i].imm;
+			pred[beqCount].rs1 = implement[i].reg1;
+			pred[beqCount].rs2 = implement[i].reg2;
+			++beqCount;
+		}
+	}
+
+	int predtime = 0;
+
+	//找出所有beq
+	for (int i = 0; i < beqCount; ++i)
+	{
+		if (pred[i].label == label)
+		{
+			predtime = pred[i].entry;
+
+			//印出beq對應的entry
+			cout << "entry: " << predtime << setw(7) << "beq " << pred[i].rs1 << "," << pred[i].rs2 << "," << label << endl;
+			break;
+		}
+	}
+
+	//判斷 2-bit history 為哪個
+	if (State[predtime].his[0] == "N")
+		State[predtime].pred1 = 0;
+	else
+		State[predtime].pred1 = 1;
+
+	if (State[predtime].his[1] == "N")
+		State[predtime].pred2 = 0;
+	else
+		State[predtime].pred2 = 1;
+
+	//按照2-bit history設定目前state
+	if (State[predtime].pred2 == 0 && State[predtime].pred1 == 0)
+	{
+		nowstate = "00";
+		statenum = 0;
+	}
+	else if (State[predtime].pred2 == 0 && State[predtime].pred1 == 1)
+	{
+		nowstate = "01";
+		statenum = 1;
+	}
+	else if (State[predtime].pred2 == 1 && State[predtime].pred1 == 0)
+	{
+		nowstate = "10";
+		statenum = 2;
+	}
+	else
+	{
+		nowstate = "11";
+		statenum = 3;
+	}
+
+	//預測是N or T
+	if (State[predtime].state[statenum] == "SN" || State[predtime].state[statenum] == "WN")
+		State[predtime].pred = "N";
+	else
+		State[predtime].pred = "T";
+
+	//輸出結果
+	cout << "(" << nowstate << ", " << State[predtime].state[0] << ", " << State[predtime].state[1] << ", " << State[predtime].state[2] << ", " << State[predtime].state[3] << ") "
+		<< State[predtime].pred << " ";
+
+	//實際beq結果
+	if (reg[rs1] == reg[rs2])
+	{
+		result = "T";
+
+		//改變state裡的狀態
+		if (result == State[predtime].pred)
+		{
+			if (State[predtime].state[statenum] == "WT")
+				State[predtime].state[statenum] = "ST";
+		}
+		else
+		{
+			if (State[predtime].state[statenum] == "SN")
+				State[predtime].state[statenum] = "WN";
+			else if (State[predtime].state[statenum] == "WN")
+				State[predtime].state[statenum] = "WT";
+			State[predtime].miss++;
+		}
+	}
+	else
+	{
+		result = "N";
+
+		//改變state狀態
+		if (result == State[predtime].pred)
+		{
+			if (State[predtime].state[statenum] == "WN")
+				State[predtime].state[statenum] = "SN";
+		}
+		else
+		{
+			if (State[predtime].state[statenum] == "ST")
+				State[predtime].state[statenum] = "WT";
+			else if (State[predtime].state[statenum] == "WT")
+				State[predtime].state[statenum] = "WN";
+
+			State[predtime].miss++;
+		}
+	}
+
+	cout << result << setw(18) << "misprediction: " << State[predtime].miss << endl << endl;
+
+	State[predtime].his[1] = State[predtime].his[0];
+	State[predtime].his[0] = result;
+}
+
+```
+
+Prediction首先判斷是否有足夠的entry給每一個branch predictor，沒有則用同一個
+
+預設原本的2-bit history為00，後面的則依之後的實際結果作為2-bit history
+
+預測結果為2-bit history對應到的state，與實際結果比較後，計算是否misprediction
+
+最後State依照預測成功or失敗的結果，改變那個entry的Predictor state
