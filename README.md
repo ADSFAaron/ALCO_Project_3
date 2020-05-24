@@ -69,7 +69,7 @@ entry: 2        beq R1,R2,End
 (00, SN, SN, SN, SN) N T                misprediction: 1
 ```
 
-## Code Explan
+## Code Explain
 
 ```c++
 #include<iostream>
