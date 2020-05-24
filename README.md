@@ -2,7 +2,7 @@
 Homework for Assembled Language and Computer Organization  Project One
 
 ## Project Goal
-可以將輸入的一段 RISC-V 組合語言的 code 轉換成對應的 Machine Code
+可以將輸入的一段 RISC-V 組合語言的 code 將branch的instruction做Predictin
 
 Input : 一段RISC-V組語的code
 
