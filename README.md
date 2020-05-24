@@ -1,61 +1,88 @@
 # ALCO_Project_3
-Homework for Assembled Language and Computer Organization  Project One
+Homework for Assembled Language and Computer Organization  Project Three
 
 ## Project Goal
 可以將輸入的一段 RISC-V 組合語言的 code 將branch的instruction做Predictin
 
-Input : 一段RISC-V組語的code
+Input : 一段RISC-V組語的code(需寫在test.txt檔裡面),entry數
 
-Output : 對應的machine code
+Output : entry以及Prediction的state轉換,預測的狀態及實際狀態,每個entry misprediction的次數
 
 ## Project Method
-透過讀檔，將RISC-V Type種類讀入程式中。
+透過讀檔，將RISC-V code讀入程式中。
 
-並先將Label所在的行數先存入`vector<string> LABEL` 
+實際做每一行RISC-V的實際運行內容。
 
-先比對輸入 Name 對應的 Type ，並將其 Type 讀入剩下參數，並轉換輸出 opcode、funct7、 funct3
+在有beq的function中執行Prediction的程式。
 
-之後將剩下的register轉換成二進位，印出結果。
+Prediction處理state的轉換以及Output。
 
+在RISC-V的程式跳到END後即結束。
 
 ## How to Use?
 Sample Input : 
 ```
-add x2,x2,x23
-addi x24,x24,2
-bne x24,x23,L2
-sd x27, 0(x10)
-beq x0,x0,L1
-L2:
-sd x1, 0(x2)
-L1:
-exit
+	li R1,0 //等同addi R1,R0,0
+	li R2,4
+Loop:
+	beq R1,R2,End
+	addi R2,R2,-1
+	beq R0,R0,Loop //R0就是我們常用的x0唷
+End:
 ```
 
 Ssample Output :
 ```
-0000000 10111 00010 000 00010 0110011
-0000000000010 11000 000 11000 0010011
-000010 10111 11000 001 000001 1100011
-0000000 11011 01010 011 00000 0100011
-000100 00000 00000 000 000000 1100011
-0000000 00001 00010 011 00000 0100011
+//input: number of entries
+8
+
+entry: 2        beq R1,R2,End           //beq R1,R2,End 使用編號2的entry
+(00, SN, SN, SN, SN) N N                misprediction: 0
+//狀態            預測值 實際值            本預測器miss次數 (從頭統計至今)
+entry: 4        beq R0,R0,Loop
+(00, SN, SN, SN, SN) N T                misprediction: 1
+
+entry: 2        beq R1,R2,End
+(00, SN, SN, SN, SN) N N                misprediction: 0
+
+entry: 4        beq R0,R0,Loop
+(01, WN, SN, SN, SN) N T                misprediction: 2
+
+entry: 2        beq R1,R2,End
+(00, SN, SN, SN, SN) N N                misprediction: 0
+
+entry: 4        beq R0,R0,Loop
+(11, WN, WN, SN, SN) N T                misprediction: 3
+
+entry: 2        beq R1,R2,End
+(00, SN, SN, SN, SN) N N                misprediction: 0
+
+entry: 4        beq R0,R0,Loop
+(11, WN, WN, SN, WN) N T                misprediction: 4
+
+entry: 2        beq R1,R2,End
+(00, SN, SN, SN, SN) N T                misprediction: 1
 ```
 
 ## 程式碼
 
 ```c++
 #include<iostream>
+#include<iomanip>
+#include<fstream>
+#include<sstream>
 #include<string>
 #include<vector>
 using namespace std;
 ```
 `include<iostream>`  用來在Terminal輸入輸出
 
-`include<string>`  用來使用string的 operator[]、find 等功能
-
-`include<vector>`  儲存所有Opreator 和輸入的Instruction的空間
+`include<iomanip>`   用在輸出格式上，以方便觀看
 
 `include<fstream>`  讀取檔案
 
 `include<sstream>`  分割string用
+
+`include<string>`  用來使用string的 operator[]、find 等功能
+
+`include<vector>`  儲存所有Opreator 和輸入的Instruction的空間
