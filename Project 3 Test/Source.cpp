@@ -1,8 +1,8 @@
-#include<iostream>
-#include<iomanip>
-#include<fstream>
+#include <iostream>
+#include <iomanip>
+#include <fstream>
 #include <sstream>
-#include<string>
+#include <string>
 #include <vector>
 using namespace std;
 
@@ -22,12 +22,12 @@ struct label
 
 struct predict
 {
-	string state[4] = { "SN","SN","SN","SN" };	//¹w³]ªº4­Óstate
-	string his[2] = { "N","N" };								//his[0] = ¤W­Ó his[1] = ¤W¤W­Ó
+	string state[4] = { "SN","SN","SN","SN" };	//é è¨­çš„4å€‹state
+	string his[2] = { "N","N" };								//his[0] = ä¸Šå€‹ his[1] = ä¸Šä¸Šå€‹
 	int pred1 = 0;
 	int pred2 = 0;
-	string pred = "N";											//·í«e¹w´ú­È
-	int miss = 0;													//¹w´ú¿ù»~¦¸¼Æ
+	string pred = "N";											//ç•¶å‰é æ¸¬å€¼
+	int miss = 0;													//é æ¸¬éŒ¯èª¤æ¬¡æ•¸
 };
 
 struct instruct
@@ -48,7 +48,7 @@ int entry = 0;
 
 bool label_detected(string& input)
 {
-	//§ä¨ìlabel 
+	//æ‰¾åˆ°label 
 	if (input.find(':') != string::npos)
 	{
 		input[input.size() - 1] = '\0';
@@ -63,7 +63,7 @@ bool label_detected(string& input)
 
 void li(string rs1, string imm)
 {
-	int r = atoi(rs1.substr(1, rs1.length() - 1).c_str());	//±Nrd §ï¦¨¼Æ¦r¡A±qregister ¨ú­È
+	int r = atoi(rs1.substr(1, rs1.length() - 1).c_str());	//å°‡rd æ”¹æˆæ•¸å­—ï¼Œå¾register å–å€¼
 	int num = atoi(imm.c_str());
 	reg[r] = num;
 }
@@ -78,13 +78,13 @@ void addi(string rd, string rs, string imm)
 
 void prediction(int rs1, int rs2, string label)
 {
-	string nowstate;		//§PÂ_¥Ø«e¦b­ş­Óstate
-	int beqno = 0;				//§PÂ_¬O¦A¶]which beq
-	int statenum;				//§PÂ_²Ä´X­Óstate
-	string result = "T";	//state¹ê»Úµ²ªG
+	string nowstate;		//åˆ¤æ–·ç›®å‰åœ¨å“ªå€‹state
+	int beqno = 0;				//åˆ¤æ–·æ˜¯å†è·‘which beq
+	int statenum;				//åˆ¤æ–·ç¬¬å¹¾å€‹state
+	string result = "T";	//stateå¯¦éš›çµæœ
 	int beqCount = 0;
 
-	//§äinstruction¤¤©Ò¦³beq
+	//æ‰¾instructionä¸­æ‰€æœ‰beq
 	for (int i = 0; i < implement.size(); ++i)
 	{
 		if (implement[i].name == "beq")
@@ -99,20 +99,20 @@ void prediction(int rs1, int rs2, string label)
 
 	int predtime = 0;
 
-	//§ä¥X©Ò¦³beq
+	//æ‰¾å‡ºæ‰€æœ‰beq
 	for (int i = 0; i < beqCount; ++i)
 	{
 		if (pred[i].label == label)
 		{
 			predtime = pred[i].entry;
 
-			//¦L¥Xbeq¹ïÀ³ªºentry
+			//å°å‡ºbeqå°æ‡‰çš„entry
 			cout << "entry: " << predtime << setw(7) << "beq " << pred[i].rs1 << "," << pred[i].rs2 << "," << label << endl;
 			break;
 		}
 	}
 
-	//§PÂ_ 2-bit history ¬°­ş­Ó
+	//åˆ¤æ–· 2-bit history ç‚ºå“ªå€‹
 	if (State[predtime].his[0] == "N")
 		State[predtime].pred1 = 0;
 	else
@@ -123,7 +123,7 @@ void prediction(int rs1, int rs2, string label)
 	else
 		State[predtime].pred2 = 1;
 
-	//«ö·Ó2-bit history³]©w¥Ø«estate
+	//æŒ‰ç…§2-bit historyè¨­å®šç›®å‰state
 	if (State[predtime].pred2 == 0 && State[predtime].pred1 == 0)
 	{
 		nowstate = "00";
@@ -145,22 +145,22 @@ void prediction(int rs1, int rs2, string label)
 		statenum = 3;
 	}
 
-	//¹w´ú¬ON or T
+	//é æ¸¬æ˜¯N or T
 	if (State[predtime].state[statenum] == "SN" || State[predtime].state[statenum] == "WN")
 		State[predtime].pred = "N";
 	else
 		State[predtime].pred = "T";
 
-	//¿é¥Xµ²ªG
+	//è¼¸å‡ºçµæœ
 	cout << "(" << nowstate << ", " << State[predtime].state[0] << ", " << State[predtime].state[1] << ", " << State[predtime].state[2] << ", " << State[predtime].state[3] << ") "
 		<< State[predtime].pred << " ";
 
-	//¹ê»Úbeqµ²ªG
+	//å¯¦éš›beqçµæœ
 	if (reg[rs1] == reg[rs2])
 	{
 		result = "T";
 
-		//§ïÅÜstate¸Ìªºª¬ºA
+		//æ”¹è®Šstateè£¡çš„ç‹€æ…‹
 		if (result == State[predtime].pred)
 		{
 			if (State[predtime].state[statenum] == "WT")
@@ -179,7 +179,7 @@ void prediction(int rs1, int rs2, string label)
 	{
 		result = "N";
 
-		//§ïÅÜstateª¬ºA
+		//æ”¹è®Šstateç‹€æ…‹
 		if (result == State[predtime].pred)
 		{
 			if (State[predtime].state[statenum] == "WN")
@@ -231,12 +231,12 @@ int main()
 	label tmp;
 	instruct file;
 	string input;
-	int row = 0;			//§PÂ_¿é¤J¨ì²Ä´X¦æ
+	int row = 0;			//åˆ¤æ–·è¼¸å…¥åˆ°ç¬¬å¹¾è¡Œ
 
-	//ÅªRISC V code
+	//è®€RISC V code
 	ifstream infile("test.txt", ios::in);
 
-	//ÀÉ®×¤£¦s¦b
+	//æª”æ¡ˆä¸å­˜åœ¨
 	if (!infile)
 	{
 		cerr << "Risc v file not found" << endl;
@@ -247,10 +247,10 @@ int main()
 	cout << "Input : number of entries" << endl;
 	cin >> entry;
 
-	//ÅªRISC V code
+	//è®€RISC V code
 	while (getline(infile, input))
 	{
-		//label¦s¦b¡A±Nlabel¦W¦r©M¦æ¼ÆÀx¦s
+		//labelå­˜åœ¨ï¼Œå°‡labelåå­—å’Œè¡Œæ•¸å„²å­˜
 		if (label_detected(input))
 		{
 			tmp.name = input;
@@ -261,7 +261,7 @@ int main()
 		{
 			stringstream ss(input);
 
-			//¤À³Îinstruction name
+			//åˆ†å‰²instruction name
 			getline(ss, file.name, ' ');
 
 			if (file.name == "li")
@@ -282,7 +282,7 @@ int main()
 			}
 			++row;
 
-			//±NInstructionÀx¦s¨ìvector¤¤
+			//å°‡Instructionå„²å­˜åˆ°vectorä¸­
 			implement.push_back(file);
 		}
 	}
@@ -291,7 +291,7 @@ int main()
 
 	while (rowPos > -1)
 	{
-		//§PÂ_¬O­ş­Óinstruction
+		//åˆ¤æ–·æ˜¯å“ªå€‹instruction
 		if (implement[rowPos].name == "li")
 		{
 			li(implement[rowPos].reg1, implement[rowPos].imm);
